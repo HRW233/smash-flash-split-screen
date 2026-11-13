@@ -7,11 +7,12 @@
       const s = SF.input.blank();
       if (!f || !f.alive || !foe || !foe.alive) return s;
 
-      const ai = f.ai || (f.ai = { atk: 0, jump: 0, spec: 0, dodge: 0, wander: 0 });
+      const ai = f.ai || (f.ai = { atk: 0, jump: 0, spec: 0, dodge: 0, wander: 0, ult: SF.rand(3, 7) });
       ai.atk -= dt;
       ai.jump -= dt;
       ai.spec -= dt;
       ai.dodge -= dt;
+      ai.ult -= dt;
 
       const dx = foe.x - f.x;
       const dy = foe.y - f.y;
@@ -90,6 +91,16 @@
         } else if (adx > 150 && adx < 760 && ady < 150) {
           s.special = true;
           ai.spec = SF.rand(1.1, 2.1);
+        }
+      }
+
+      /* ---- ultimate when the meter is full and the foe is in range */
+      if (ai.ult <= 0 && f.ultCharge >= 1) {
+        const u = f.char.ult || {};
+        const far = u.kind === "beam" || u.kind === "orb" || u.kind === "barrage" || u.kind === "storm";
+        if (adx < (far ? 620 : 330) && ady < 240) {
+          s.ult = true;
+          ai.ult = SF.rand(4, 7);
         }
       }
 

@@ -71,6 +71,7 @@ const KEYMAPS = [
     attack: "KeyF",
     special: "KeyG",
     dodge: "KeyV",
+    ult: "KeyT",
   },
   {
     left: "ArrowLeft",
@@ -80,6 +81,7 @@ const KEYMAPS = [
     attack: "KeyK",
     special: "KeyL",
     dodge: "Semicolon",
+    ult: "Quote",
   },
 ];
 
@@ -145,6 +147,7 @@ class InputManager {
       attackHeld: this.down(m.attack),
       special: this.hit(m.special),
       dodge: this.hit(m.dodge),
+      ult: this.hit(m.ult),
     };
   }
   blank() {
@@ -158,6 +161,7 @@ class InputManager {
       attackHeld: false,
       special: false,
       dodge: false,
+      ult: false,
     };
   }
 }
@@ -269,6 +273,14 @@ SF.Sound = {
   },
   move() {
     this.tone({ freq: 420, dur: 0.05, type: "square", vol: 0.05 });
+  },
+  ult() {
+    this.tone({ freq: 110, to: 880, dur: 0.5, type: "sawtooth", vol: 0.16 });
+    this.tone({ freq: 360, to: 1360, dur: 0.42, type: "square", vol: 0.09, delay: 0.05 });
+    this.noise({ dur: 0.75, freq: 420, to: 3000, vol: 0.16, q: 0.7 });
+    [880, 1180, 1480, 1760].forEach((f, i) =>
+      this.tone({ freq: f, dur: 0.13, type: "triangle", vol: 0.08, delay: 0.28 + i * 0.055 })
+    );
   },
   start() {
     [523, 659, 784, 1046].forEach((f, i) =>
