@@ -140,6 +140,42 @@
       c.strokeStyle = "#57c8ee";
       c.lineWidth = 2;
       c.stroke();
+    } else if (style === "column") {
+      /* a bolt of lightning dropped straight down out of the sky */
+      c.globalCompositeOperation = "lighter";
+      let seed = (p.seed || 7) % 2147483647;
+      const pts = [];
+      let y = -560;
+      pts.push([0, y]);
+      for (let i = 0; i < 11; i++) {
+        seed = (seed * 16807) % 2147483647;
+        const jx = ((seed % 1000) / 1000 - 0.5) * 40;
+        y += 58;
+        pts.push([jx, y]);
+      }
+      c.strokeStyle = SF.rgba(col, 0.35);
+      c.lineWidth = 16;
+      c.lineJoin = "round";
+      c.beginPath();
+      pts.forEach((q, i) => (i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])));
+      c.stroke();
+      c.strokeStyle = col;
+      c.lineWidth = 5;
+      c.beginPath();
+      pts.forEach((q, i) => (i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])));
+      c.stroke();
+      c.strokeStyle = "rgba(255,255,245,0.95)";
+      c.lineWidth = 2;
+      c.beginPath();
+      pts.forEach((q, i) => (i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])));
+      c.stroke();
+      const g2 = c.createRadialGradient(0, 0, 2, 0, 0, 46);
+      g2.addColorStop(0, "rgba(255,255,240,0.9)");
+      g2.addColorStop(1, SF.rgba(col, 0));
+      c.fillStyle = g2;
+      c.beginPath();
+      c.arc(0, 0, 46, 0, SF.TAU);
+      c.fill();
     } else if (style === "fire") {
       c.translate(p.x, p.y);
       c.globalCompositeOperation = "lighter";
