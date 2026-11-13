@@ -41,6 +41,8 @@ class Fighter {
     this.dodgeCd = 0;
     this.dodgeT = 0;
     this.specialCd = 0;
+    this.ultCharge = 0;
+    this.ultMove = null;
     this.koTimer = 0;
     this.dead = false;
     this.lastHitBy = null;
@@ -97,8 +99,10 @@ class Fighter {
       this.updateAttack(dt, input, foe);
     } else if (this.state === "special") {
       this.updateSpecial(dt, foe);
+    } else if (this.state === "ult") {
+      this.updateUlt(dt, foe);
     } else {
-      this.handleInput(dt, input);
+      this.handleInput(dt, input, foe);
     }
 
     this.physics(dt);
@@ -106,9 +110,13 @@ class Fighter {
     this.runCycle += Math.abs(this.vx) * dt * 0.055;
   }
 
-  handleInput(dt, input) {
+  handleInput(dt, input, foe) {
     const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
 
+    if (input.ult && this.ultReady) {
+      this.doUlt(foe);
+      return;
+    }
     if (input.dodge && this.dodgeCd <= 0) {
       this.doDodge(dir);
       return;
@@ -264,6 +272,11 @@ class Fighter {
     const pw = power || 1;
     const dmg = hit.dmg * pw;
     this.damage = Math.min(999, this.damage + dmg);
+    /* both sides build ultimate meter: landing hits, and taking them */
+    if (attacker && typeof attacker.ultCharge === "number") {
+      attacker.ultCharge = Math.min(1, attacker.ultCharge + dmg * 0.02);
+    }
+    this.ultCharge = Math.min(1, this.ultCharge + dmg * 0.035);
 
     const wf = 1.16 - (this.weight - 1) * 0.42;
     const kb = (hit.base + this.damage * hit.scale) * wf * 1.02;
@@ -491,6 +504,285 @@ class Fighter {
     }
   }
 
+  /* --------------------------------------------------------------- ults */
+  get ultReady() {
+    return this.ultCharge >= 1;
+  }
+
+  doUlt(foe) {
+    const u = this.char.ult;
+    if (!u || !this.ultReady || !this.alive) return;
+    this.ultCharge = 0;
+    this.state = "ult";
+    this.attack = null;
+    this.spec = null;
+    this.hitstun = 0;
+    this.ultMove = { kind: u.kind, t: 0, dur: u.dur || 1.1, fired: 0, slammed: false, sp: u };
+    this.invuln = Math.max(this.invuln, (u.dur || 1.1) + 0.25);
+    this.vx *= 0.2;
+    const col = u.color || this.palette.glow;
+    SF.World.ring(this.x, this.y - 28, col, 84);
+    SF.World.burst(this.x, this.y - 30, col, 18, 400, { size: 6, life: 0.5, grav: 0 });
+    SF.World.add({
+      type: "text",
+      x: this.x,
+      y: this.y - 104,
+      vx: 0,
+      vy: -46,
+      life: 1.05,
+      size: 21,
+      color: col,
+      text: u.name,
+    });
+    SF.World.shakeTo(14);
+    SF.Sound.ult();
+    if (u.kind === "meteor" || u.kind === "quake") {
+      this.vy = -1150;
+      this.vx = this.facing * 140;
+      this.onGround = false;
+    }
+  }
+
+  updateUlt(dt, foe) {
+    const m = this.ultMove;
+    if (!m) {
+      this.state = this.onGround ? "idle" : "air";
+      return;
+    }
+    const u = m.sp;
+    const col = u.color || this.palette.glow;
+    m.t += dt;
+    const t = m.t;
+
+    if (u.kind === "rush") this.vx = SF.approach(this.vx, this.facing * 120, 2600 * dt);
+    else if (u.kind !== "meteor" && u.kind !== "quake") this.vx = SF.approach(this.vx, 0, 3600 * dt);
+    if (u.kind !== "meteor" && u.kind !== "quake") SF.World.chargePuff(this);
+
+    if (u.kind === "domain") {
+      /* the void catches anyone standing in it, then throws them out */
+      if (!m.fired && t >= 0.4) {
+        m.fired = 1;
+        SF.World.shockwave(this.x, this.y - 30, this, {
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          rMax: u.rMax || 280,
+          dur: 0.5,
+          color: col,
+          circle: true,
+        });
+        SF.World.ring(this.x, this.y - 30, "#e0d0ff", 150);
+        SF.World.shakeTo(24);
+        if (foe && foe.alive && Math.abs(foe.x - this.x) < 560 && Math.abs(foe.y - this.y) < 420) {
+          foe.frozen = Math.max(foe.frozen, 1.1);
+          foe.vx = 0;
+        }
+      }
+    } else if (u.kind === "punch") {
+      if (!m.fired && t >= 0.46) {
+        m.fired = 1;
+        const box = this.hitbox({ x: 8, y: -116, w: 214, h: 156 });
+        SF.World.burst(box.x + box.w / 2, this.y - 42, col, 26, 560, { size: 7, life: 0.42 });
+        SF.World.ring(box.x + box.w / 2, this.y - 42, col, 120);
+        SF.World.shakeTo(20);
+        SF.Sound.hit(1);
+        if (foe && foe.canBeHit() && SF.overlap(box, foe.hurtbox)) {
+          foe.receiveHit(
+            this,
+            { dmg: u.dmg, base: u.base, scale: u.scale, angle: u.angle },
+            1,
+            this.facing,
+            box.x + box.w / 2,
+            box.y + 78
+          );
+        }
+      }
+    } else if (u.kind === "rush") {
+      const interval = u.interval || 0.12;
+      const want = Math.min(u.hits || 6, Math.floor(t / interval) + 1);
+      while (m.fired < want) {
+        m.fired++;
+        if (!foe || !foe.alive) break;
+        if (Math.abs(foe.x - this.x) > (u.range || 460) || Math.abs(foe.y - this.y) > 320) break;
+        SF.World.dashBurst(this.x, this.y - 26, col, this.facing);
+        this.x = foe.x - this.facing * 52;
+        this.y = foe.y - 6;
+        this.onGround = false;
+        SF.World.dashBurst(this.x, this.y - 26, col, this.facing);
+        if (foe.canBeHit()) {
+          foe.receiveHit(
+            this,
+            { dmg: u.dmg, base: u.base, scale: u.scale, angle: u.angle },
+            1,
+            this.facing,
+            foe.x,
+            foe.y - 30
+          );
+        }
+        SF.World.shakeTo(9);
+      }
+    } else if (u.kind === "meteor" || u.kind === "quake") {
+      if (!m.slammed && this.onGround && t > 0.2) {
+        m.slammed = true;
+        SF.World.shockwave(this.x, this.y, this, {
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          rMax: u.rMax || 320,
+          color: col,
+        });
+        SF.World.dust(this.x, this.y, 0, 20);
+        SF.World.shakeTo(u.kind === "quake" ? 26 : 21);
+        SF.Sound.special("pound");
+      }
+      if (!m.slammed && t > (u.dur || 1.4) * 0.55 && this.vy < 500) this.vy = 1000;
+    } else if (u.kind === "barrage") {
+      const want = Math.min(u.shots || 5, Math.floor(t / 0.13) + 1);
+      while (m.fired < want) {
+        m.fired++;
+        SF.World.spawnProjectile({
+          kind: "shot",
+          style: "fist",
+          color: col,
+          owner: this,
+          x: this.x + this.facing * 24,
+          y: this.y - 36 + (m.fired - 3) * 12,
+          vx: this.facing * (u.speed || 1000),
+          vy: 0,
+          grav: 0,
+          r: 26,
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          dir: this.facing,
+          life: 0.85,
+        });
+        SF.World.muzzle(this.x + this.facing * 30, this.y - 36, col, this.facing);
+        SF.Sound.swing();
+      }
+    } else if (u.kind === "orb" || u.kind === "beam" || u.kind === "crescent" || u.kind === "blizzard") {
+      const delay = u.kind === "blizzard" ? 0.26 : u.kind === "beam" ? 0.45 : 0.3;
+      const shots = u.kind === "crescent" ? 2 : 1;
+      if (m.fired < shots && t >= delay + m.fired * 0.16) {
+        m.fired++;
+        const style =
+          u.kind === "blizzard" ? "ice" : u.kind === "orb" ? "orb" : u.kind === "beam" ? "beam" : "crescent";
+        SF.World.spawnProjectile({
+          kind: "shot",
+          style,
+          color: col,
+          owner: this,
+          x: this.x + this.facing * 40,
+          y: this.y - 34,
+          vx: this.facing * (u.speed || 600),
+          vy: 0,
+          grav: 0,
+          r: u.r || 30,
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          freeze: u.freeze || 0,
+          pierce: u.kind !== "blizzard",
+          dir: this.facing,
+          life: u.life || 1.2,
+        });
+        SF.World.muzzle(this.x + this.facing * 44, this.y - 34, col, this.facing);
+        SF.World.shakeTo(14);
+        SF.Sound.special(u.kind === "blizzard" ? "ice" : "fire");
+      }
+    } else if (u.kind === "storm") {
+      const interval = u.interval || 0.12;
+      const want = Math.min(u.bolts || 8, Math.floor(t / interval) + 1);
+      while (m.fired < want) {
+        m.fired++;
+        const base = foe && foe.alive ? foe.x : this.x + this.facing * 120;
+        const bx = SF.clamp(base + SF.rand(-(u.spread || 300), u.spread || 300), -420, 420);
+        const by =
+          foe && foe.alive
+            ? SF.clamp(foe.y - 6, -720, SF.STAGE.floor.y)
+            : SF.STAGE.floor.y;
+        SF.World.spawnProjectile({
+          kind: "shot",
+          style: "column",
+          color: col,
+          owner: this,
+          x: bx,
+          y: by,
+          vx: 0,
+          vy: 0,
+          grav: 0,
+          r: u.r || 44,
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          dir: this.facing,
+          life: 0.22,
+          pierce: true,
+          seed: SF.randInt(1, 99999),
+        });
+        SF.World.burst(bx, by, col, 8, 220, { angle: -Math.PI / 2, spread: 0.5, size: 4, life: 0.3 });
+        SF.World.shakeTo(8);
+        SF.Sound.tick();
+      }
+    } else if (u.kind === "pillars") {
+      const interval = u.interval || 0.08;
+      const want = Math.min(u.spikes || 6, Math.floor(t / interval) + 1);
+      while (m.fired < want) {
+        const idx = m.fired++;
+        const px = SF.clamp(this.x + this.facing * (30 + idx * (u.gap || 80)), -430, 430);
+        SF.World.spawnProjectile({
+          kind: "shot",
+          style: "spike",
+          color: col,
+          owner: this,
+          x: px,
+          y: SF.STAGE.floor.y,
+          vx: 0,
+          vy: 0,
+          grav: 0,
+          r: u.r || 40,
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          dir: this.facing,
+          life: 0.42,
+          pierce: true,
+        });
+        SF.World.dust(px, SF.STAGE.floor.y, 0, 5);
+        SF.World.shakeTo(7);
+      }
+    } else if (u.kind === "nova") {
+      const interval = u.interval || 0.2;
+      const want = Math.min(u.rings || 3, Math.floor(t / interval) + 1);
+      while (m.fired < want) {
+        const idx = m.fired++;
+        SF.World.shockwave(this.x, this.y - 24, this, {
+          dmg: u.dmg,
+          base: u.base,
+          scale: u.scale,
+          angle: u.angle,
+          rMax: (u.rMax || 210) + idx * 70,
+          dur: 0.35 + idx * 0.05,
+          color: col,
+          circle: true,
+        });
+        SF.World.burst(this.x, this.y - 24, col, 14, 300, { size: 5, life: 0.4, grav: -60 });
+        SF.World.shakeTo(10 + idx * 3);
+      }
+    }
+
+    if (m.t >= m.dur) {
+      this.ultMove = null;
+      this.state = this.onGround ? "idle" : "air";
+    }
+  }
+
   /* ------------------------------------------------------------ physics */
   physics(dt) {
     const wasGround = this.onGround;
@@ -558,6 +850,7 @@ class Fighter {
     this.koTimer = 1.05;
     this.attack = null;
     this.spec = null;
+    this.ultMove = null;
     this.vx = 0;
     this.vy = 0;
     this.frozen = 0;
