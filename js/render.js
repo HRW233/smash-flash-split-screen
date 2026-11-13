@@ -7,7 +7,10 @@
   let ctx = null;
   let W = 0;
   let H = 0;
-  let dpr = 1;
+  /* the game draws into a tiny buffer that is blown up with nearest-neighbour
+     sampling, which is what gives everything its chunky pixel edges */
+  const PIXELS = 420;
+  let px = 3;
 
   R.init = function (c) {
     canvas = c;
@@ -18,17 +21,19 @@
 
   R.resize = function () {
     if (!canvas) return;
-    dpr = Math.min(2, window.devicePixelRatio || 1);
     W = window.innerWidth;
     H = window.innerHeight;
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
+    px = SF.clamp(Math.round(Math.max(W, H) / PIXELS), 2, 8);
+    canvas.width = Math.max(2, Math.round(W / px));
+    canvas.height = Math.max(2, Math.round(H / px));
     canvas.style.width = W + "px";
     canvas.style.height = H + "px";
+    canvas.style.imageRendering = "pixelated";
   };
 
   R.begin = function () {
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    /* one virtual pixel per game unit, stretched over px screen pixels */
+    ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = "#070a14";
     ctx.fillRect(0, 0, W, H);
@@ -838,10 +843,10 @@
       c.lineTo(tx + 7, ty);
       c.closePath();
       c.fill();
-      c.font = fontPlain(13 * scale, 800);
+      c.font = fontPlain(15 * scale, 800);
       c.textAlign = "center";
       c.fillStyle = "#0a0a12";
-      c.fillRect(tx - 15, ty - 15, 30, 15);
+      c.fillRect(tx - 18, ty - 16, 36, 16);
       c.fillStyle = o.tagColor || p.accent;
       c.fillText(o.tag, tx, ty - 3.5);
       c.restore();
@@ -1184,7 +1189,7 @@
 
     /* name + stocks */
     ctx.save();
-    text(f.name, panel.x + pad + 64, baseY - 56, Math.max(13, panel.w * 0.022), "#ffffff", {
+    text(f.name, panel.x + pad + 64, baseY - 56, Math.max(18, panel.w * 0.03), "#ffffff", {
       align: "left",
       lw: 4,
     });
@@ -1232,7 +1237,7 @@
     const w = Math.min(200, panel.w * 0.3);
     tally(panel.x + panel.w - pad - w, baseY - 22, w, 8, ready ? 1 : 1 - f.specialCd / sp.cooldown, ready ? f.palette.accent : "#6b7280");
     ctx.save();
-    ctx.font = fontPlain(Math.max(9, panel.w * 0.014), 800);
+    ctx.font = fontPlain(Math.max(13, panel.w * 0.019), 800);
     ctx.textAlign = "right";
     ctx.fillStyle = ready ? "#ffffff" : "rgba(255,255,255,0.45)";
     ctx.fillText(sp.label + (ready ? " READY" : ""), panel.x + panel.w - pad, baseY - 30);
@@ -1363,7 +1368,7 @@
         ctx.fill();
       }
     });
-    text("W / S  OR  ARROWS TO SWITCH   -   ENTER TO START", w / 2, h - 22, Math.max(10, w * 0.011), "rgba(255,255,255,0.5)", {
+    text("W / S  OR  ARROWS TO SWITCH   -   ENTER TO START", w / 2, h - 22, Math.max(13, w * 0.014), "rgba(255,255,255,0.5)", {
       plain: true,
       weight: 700,
       stroke: false,
@@ -1372,13 +1377,13 @@
 
     /* controls strip */
     const cw = Math.min(w * 0.42, 470);
-    const cy = h * 0.5;
+    const cy = h * 0.47;
     controlCard(w / 2 - cw - 12, cy, cw, "#4cc9f0", "PLAYER 1", ["A D  MOVE", "W  JUMP", "S  FAST FALL", "F  ATTACK", "G  SPECIAL", "V  DODGE"]);
     controlCard(w / 2 + 12, cy, cw, "#f72585", "PLAYER 2", ["← →  MOVE", "↑  JUMP", "↓  FAST FALL", "K  ATTACK", "L  SPECIAL", ";  DODGE"]);
   };
 
   function controlCard(x, y, w, color, title, lines) {
-    const h = 30 + lines.length * 17;
+    const h = 36 + lines.length * 19;
     ctx.save();
     ctx.fillStyle = "rgba(6,6,18,0.55)";
     rr(ctx, x, y, w, h, 10);
@@ -1388,13 +1393,13 @@
     ctx.lineWidth = 1.6;
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.font = fontPlain(12, 800);
+    ctx.font = fontPlain(15, 800);
     ctx.textAlign = "left";
     ctx.fillStyle = color;
-    ctx.fillText(title, x + 14, y + 20);
-    ctx.font = fontPlain(11, 600);
+    ctx.fillText(title, x + 14, y + 23);
+    ctx.font = fontPlain(14, 700);
     ctx.fillStyle = "rgba(255,255,255,0.72)";
-    lines.forEach((l, i) => ctx.fillText(l, x + 14, y + 38 + i * 17));
+    lines.forEach((l, i) => ctx.fillText(l, x + 14, y + 40 + i * 19));
     ctx.restore();
   }
 
@@ -1642,15 +1647,15 @@
     text("PAUSED", w / 2, h * 0.4, Math.max(30, w * 0.05), "#ffffff", { lw: 10 });
     text("ESC — RESUME", w / 2, h * 0.49, Math.max(13, w * 0.015), "#ffe066", { lw: 4 });
     text("ENTER — QUIT TO CHARACTER SELECT", w / 2, h * 0.55, Math.max(13, w * 0.015), "rgba(255,255,255,0.75)", { lw: 4 });
-    text("P1  A/D MOVE  W JUMP  S FALL  F ATTACK  G SPECIAL  V DODGE", w / 2, h * 0.64, Math.max(10, w * 0.011), "rgba(180,225,255,0.8)", {
+    text("P1  A/D MOVE  W JUMP  S FALL  F ATTACK  G SPECIAL  V DODGE", w / 2, h * 0.64, Math.max(13, w * 0.014), "rgba(180,225,255,0.8)", {
       plain: true,
       stroke: false,
     });
-    text("P2  ← → MOVE  ↑ JUMP  ↓ FALL  K ATTACK  L SPECIAL  ; DODGE", w / 2, h * 0.68, Math.max(10, w * 0.011), "rgba(255,190,225,0.8)", {
+    text("P2  ← → MOVE  ↑ JUMP  ↓ FALL  K ATTACK  L SPECIAL  ; DODGE", w / 2, h * 0.68, Math.max(13, w * 0.014), "rgba(255,190,225,0.8)", {
       plain: true,
       stroke: false,
     });
-    text("M — MUTE SOUND", w / 2, h * 0.74, Math.max(9, w * 0.01), "rgba(255,255,255,0.4)", { plain: true, stroke: false });
+    text("M — MUTE SOUND", w / 2, h * 0.74, Math.max(12, w * 0.013), "rgba(255,255,255,0.4)", { plain: true, stroke: false });
   };
 
   R.countdown = function (game, panel) {

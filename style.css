@@ -16,6 +16,8 @@ canvas {
   height: 100vh;
   background: #05060f;
   touch-action: none;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 body {
