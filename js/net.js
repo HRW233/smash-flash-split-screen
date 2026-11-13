@@ -34,6 +34,7 @@
       this.frozen = 0;
       this.invuln = 0;
       this.specialCd = 0;
+      this.ultCharge = 0;
       this.damage = 0;
       this.stocks = SF.STOCKS;
       this.dead = false;
@@ -557,6 +558,7 @@
         attackHeld: !!(p.ah || p.a),
         special: !!(withEdges && p.s),
         dodge: !!(withEdges && p.g),
+        ult: !!(withEdges && p.u2),
       };
     },
 
@@ -584,6 +586,7 @@
         x.attack ? +x.attack.power.toFixed(2) : 0,
         x.spec ? x.spec.kind : 0,
         Math.round(x.vx),
+        +x.ultCharge.toFixed(2),
       ]);
       const p = SF.World.projectiles.map((q) => [
         q.kind,
@@ -630,6 +633,7 @@
         ah: s.attackHeld ? 1 : 0,
         s: s.special ? 1 : 0,
         g: s.dodge ? 1 : 0,
+        u2: s.ult ? 1 : 0,
       });
 
       SF.World.update(dt, []);
@@ -673,6 +677,7 @@
           : null;
         f.spec = a[19] ? { kind: a[19] } : null;
         f.vx = a[20];
+        f.ultCharge = a[21] || 0;
         if (f.flash > 0.9 && wasFlash < 0.5) SF.World.hitSpark(f.x, f.y - 26, 0.45, f.palette.accent);
       });
 
@@ -778,7 +783,7 @@
         } else {
           txt(c, "WAITING FOR THE HOST TO START", w / 2, h * 0.81, Math.max(14, w * 0.016), "rgba(255,255,255,0.7)");
         }
-        txt(c, "YOU BOTH USE W A S D TO MOVE, F ATTACK, G SPECIAL, V DODGE", w / 2, h - 46, Math.max(10, w * 0.0115), "rgba(255,255,255,0.45)", "center", 700);
+        txt(c, "YOU BOTH USE W A S D TO MOVE, F ATTACK, G SPECIAL, V DODGE, T ULT", w / 2, h - 46, Math.max(10, w * 0.0115), "rgba(255,255,255,0.45)", "center", 700);
         txt(c, "ESC LEAVE", w / 2, h - 26, Math.max(10, w * 0.0115), "rgba(255,255,255,0.35)", "center", 700);
         return;
       }
