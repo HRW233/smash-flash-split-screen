@@ -3,7 +3,8 @@
 A local two-player platform fighter in the style of Super Smash Flash, built with vanilla
 JavaScript and canvas. The screen splits down the middle: each player gets their own camera that
 frames the fight around their own fighter, zooms with the distance between the two, and points an
-arrow at the opponent when they leave the view.
+arrow at the opponent when they leave the view. Everything is drawn into a small offscreen buffer
+and scaled up with nearest-neighbour sampling, so the whole game has a chunky pixel-art look.
 
 No build step, no dependencies, no image or audio files — every fighter, effect and sound is
 generated at runtime.
@@ -43,8 +44,12 @@ Two people share one keyboard.
 
 `Enter` confirms, `Esc` pauses, `M` mutes.
 
-Holding `W`/`↑` jumps full height; tapping gives a short hop. Attacks are directional: up for an
-anti-air, down for a low sweep, and a plain aerial in the air.
+Holding `W`/`↑` jumps full height; tapping gives a short hop.
+
+Attacks are directional, and every direction is its own move. On the ground: forward is a
+chargeable smash, up is an anti-air, down is a low sweep. In the air: neutral is a plain aerial,
+toward the foe is a forward kick, away is a back kick that throws them behind you, up is a rising
+uppercut and down is a spike that drives them toward the blast zone.
 
 ## Rules
 

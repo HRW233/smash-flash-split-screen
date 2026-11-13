@@ -7,6 +7,11 @@
     up: { startup: 0.1, active: 0.11, recovery: 0.24, box: { x: -8, y: -106, w: 64, h: 68 }, dmg: 9, base: 305, scale: 6.5, angle: 84 },
     down: { startup: 0.13, active: 0.1, recovery: 0.27, box: { x: -42, y: -24, w: 86, h: 30 }, dmg: 13, base: 265, scale: 6, angle: 18 },
     air: { startup: 0.09, active: 0.17, recovery: 0.22, box: { x: -10, y: -82, w: 74, h: 72 }, dmg: 11, base: 290, scale: 7, angle: 42 },
+    /* one aerial per direction: forward kicks, back kicks, rising uppercut, downward spike */
+    airFwd: { startup: 0.09, active: 0.15, recovery: 0.24, box: { x: 12, y: -78, w: 74, h: 60 }, dmg: 12, base: 300, scale: 7, angle: 38 },
+    airBack: { startup: 0.1, active: 0.14, recovery: 0.26, box: { x: -74, y: -72, w: 66, h: 58 }, dmg: 13, base: 320, scale: 7.2, angle: 145 },
+    airUp: { startup: 0.08, active: 0.16, recovery: 0.22, box: { x: -16, y: -120, w: 62, h: 66 }, dmg: 10, base: 305, scale: 6.4, angle: 86 },
+    airDown: { startup: 0.11, active: 0.16, recovery: 0.28, box: { x: -24, y: -40, w: 58, h: 58 }, dmg: 14, base: 255, scale: 5.8, angle: 282 },
   };
 
   /* scale a move set by a fighter's stats */

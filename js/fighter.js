@@ -166,9 +166,21 @@ class Fighter {
     if (this.onGround) {
       const kind = input.up ? "up" : input.down ? "down" : "side";
       this.startAttack(kind, input);
-    } else {
-      this.startAttack("air", input);
+      return;
     }
+    /* in the air every direction is its own move */
+    const toward = this.facing > 0 ? input.right : input.left;
+    const away = this.facing > 0 ? input.left : input.right;
+    const kind = input.up
+      ? "airUp"
+      : input.down
+      ? "airDown"
+      : toward
+      ? "airFwd"
+      : away
+      ? "airBack"
+      : "air";
+    this.startAttack(kind, input);
   }
 
   startAttack(kind, input) {
@@ -181,7 +193,7 @@ class Fighter {
     } else {
       SF.Sound.swing();
     }
-    if (!this.onGround && kind === "air") this.vy = Math.min(this.vy, 120);
+    if (!this.onGround && kind.startsWith("air")) this.vy = Math.min(this.vy, 120);
   }
 
   updateAttack(dt, input, foe) {
