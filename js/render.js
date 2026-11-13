@@ -222,6 +222,17 @@
         }
         break;
       }
+      case "ult": {
+        /* arms out, lifted off the ground by the aura */
+        p.armF = -2.65;
+        p.armB = 2.65;
+        p.legF = 0.32;
+        p.legB = -0.32;
+        p.lean = -0.18;
+        p.headTilt = -0.18;
+        p.bob = -5 - Math.sin(t * 16) * 1.8;
+        break;
+      }
     }
     return p;
   }
@@ -844,6 +855,31 @@
       c.restore();
     }
 
+    /* ---- ultimate aura */
+    if (f.state === "ult") {
+      const u = f.char.ult || {};
+      const col = u.color || p.glow || p.accent;
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      const grd = c.createRadialGradient(0, -30, 6, 0, -30, 96);
+      grd.addColorStop(0, SF.rgba(col, 0.8));
+      grd.addColorStop(1, SF.rgba(col, 0));
+      c.fillStyle = grd;
+      c.beginPath();
+      c.arc(0, -30, 96, 0, SF.TAU);
+      c.fill();
+      c.strokeStyle = col;
+      c.lineWidth = 2.6;
+      for (let i = 0; i < 3; i++) {
+        const ph = (t * 84 + i * 30) % 88;
+        c.globalAlpha = 0.75 * (1 - ph / 88);
+        c.beginPath();
+        c.arc(0, -28, 22 + ph, 0, SF.TAU);
+        c.stroke();
+      }
+      c.restore();
+    }
+
     /* ---- freeze block */
     if (f.frozen > 0) {
       c.globalAlpha = 0.55;
@@ -1271,6 +1307,36 @@
     ctx.fillStyle = ready ? "#ffffff" : "rgba(255,255,255,0.45)";
     ctx.fillText(sp.label + (ready ? " READY" : ""), panel.x + panel.w - pad, baseY - 30);
     ctx.restore();
+
+    /* ultimate meter */
+    const uReady = (f.ultCharge || 0) >= 1;
+    const uKey = f.index === 0 ? "T" : "'";
+    tally(
+      panel.x + panel.w - pad - w,
+      baseY - 46,
+      w,
+      8,
+      SF.clamp(f.ultCharge || 0, 0, 1),
+      uReady ? "#ffe066" : "#8b5cf6"
+    );
+    ctx.save();
+    ctx.font = fontPlain(Math.max(13, panel.w * 0.019), 800);
+    ctx.textAlign = "right";
+    ctx.fillStyle = uReady ? "#ffe066" : "rgba(255,255,255,0.5)";
+    ctx.fillText(
+      uReady ? "ULT READY — " + uKey : "ULT " + Math.floor((f.ultCharge || 0) * 100) + "%",
+      panel.x + panel.w - pad,
+      baseY - 52
+    );
+    if (uReady) {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.globalAlpha = 0.3 + Math.sin(game.time * 8) * 0.2;
+      ctx.fillStyle = "#ffe066";
+      ctx.beginPath();
+      ctx.arc(panel.x + panel.w - pad - w / 2, baseY - 42, 28, 0, SF.TAU);
+      ctx.fill();
+    }
+    ctx.restore();
   };
 
   /* ============================================================== SCREENS */
@@ -1407,8 +1473,8 @@
     /* controls strip */
     const cw = Math.min(w * 0.42, 470);
     const cy = h * 0.47;
-    controlCard(w / 2 - cw - 12, cy, cw, "#4cc9f0", "PLAYER 1", ["A D  MOVE", "W  JUMP", "S  FAST FALL", "F  ATTACK", "G  SPECIAL", "V  DODGE"]);
-    controlCard(w / 2 + 12, cy, cw, "#f72585", "PLAYER 2", ["← →  MOVE", "↑  JUMP", "↓  FAST FALL", "K  ATTACK", "L  SPECIAL", ";  DODGE"]);
+    controlCard(w / 2 - cw - 12, cy, cw, "#4cc9f0", "PLAYER 1", ["A D  MOVE", "W  JUMP", "S  FAST FALL", "F  ATTACK", "G  SPECIAL", "V  DODGE", "T  ULTIMATE"]);
+    controlCard(w / 2 + 12, cy, cw, "#f72585", "PLAYER 2", ["← →  MOVE", "↑  JUMP", "↓  FAST FALL", "K  ATTACK", "L  SPECIAL", ";  DODGE", "'  ULTIMATE"]);
   };
 
   function controlCard(x, y, w, color, title, lines) {
@@ -1676,11 +1742,11 @@
     text("PAUSED", w / 2, h * 0.4, Math.max(30, w * 0.05), "#ffffff", { lw: 10 });
     text("ESC — RESUME", w / 2, h * 0.49, Math.max(13, w * 0.015), "#ffe066", { lw: 4 });
     text("ENTER — QUIT TO CHARACTER SELECT", w / 2, h * 0.55, Math.max(13, w * 0.015), "rgba(255,255,255,0.75)", { lw: 4 });
-    text("P1  A/D MOVE  W JUMP  S FALL  F ATTACK  G SPECIAL  V DODGE", w / 2, h * 0.64, Math.max(13, w * 0.014), "rgba(180,225,255,0.8)", {
+    text("P1  A/D MOVE  W JUMP  S FALL  F ATTACK  G SPECIAL  V DODGE  T ULT", w / 2, h * 0.64, Math.max(13, w * 0.014), "rgba(180,225,255,0.8)", {
       plain: true,
       stroke: false,
     });
-    text("P2  ← → MOVE  ↑ JUMP  ↓ FALL  K ATTACK  L SPECIAL  ; DODGE", w / 2, h * 0.68, Math.max(13, w * 0.014), "rgba(255,190,225,0.8)", {
+    text("P2  ← → MOVE  ↑ JUMP  ↓ FALL  K ATTACK  L SPECIAL  ; DODGE  ' ULT", w / 2, h * 0.68, Math.max(13, w * 0.014), "rgba(255,190,225,0.8)", {
       plain: true,
       stroke: false,
     });
