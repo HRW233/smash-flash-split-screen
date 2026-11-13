@@ -126,7 +126,7 @@ class Fighter {
       return;
     }
     if (input.special) {
-      this.doSpecial();
+      this.doSpecial(input);
       return;
     }
     if (input.jump) this.jump();
@@ -322,10 +322,17 @@ class Fighter {
   }
 
   /* ----------------------------------------------------------- specials */
-  doSpecial() {
-    const sp = this.char.special;
+  doSpecial(input) {
+    /* four specials per fighter: up, down, toward the foe, or none held */
+    const set = this.char.specials || { neutral: this.char.special };
+    let sp = set.neutral;
+    if (input && (input.left || input.right)) sp = set.side || sp;
+    if (input && input.down) sp = set.down || sp;
+    if (input && input.up) sp = set.up || sp;
+    if (!sp) return;
     if (this.specialCd > 0) return;
     this.specialCd = sp.cooldown;
+    this.specCdMax = sp.cooldown;
     const snd =
       sp.type === "dash"
         ? "dash"
@@ -363,6 +370,67 @@ class Fighter {
       this.vx -= this.facing * 70;
       this.landSquash = 0.3;
       this.state = this.onGround ? "idle" : "air";
+    } else if (sp.type === "spread" || sp.type === "toss") {
+      const shots = sp.type === "toss" ? 1 : sp.shots || 3;
+      const fan = sp.fan || 0.18;
+      for (let i = 0; i < shots; i++) {
+        const off = shots === 1 ? 0 : (i - (shots - 1) / 2) * fan;
+        const row = shots === 1 ? 0 : i - (shots - 1) / 2;
+        SF.World.spawnProjectile({
+          kind: "shot",
+          style: sp.style || "orb",
+          color: sp.color || this.palette.glow,
+          owner: this,
+          x: this.x + this.facing * 26,
+          y: this.y - 34 + row * 9,
+          vx: this.facing * (sp.speed || 700) * Math.cos(off),
+          vy: sp.type === "toss" ? -(sp.lob || 520) : Math.sin(off) * (sp.speed || 700) * 0.6,
+          grav: sp.type === "toss" ? sp.gravity || 900 : sp.gravity || 0,
+          r: sp.r || 14,
+          dmg: sp.dmg,
+          base: sp.base,
+          scale: sp.scale,
+          angle: sp.angle,
+          freeze: sp.freeze || 0,
+          pierce: !!sp.pierce,
+          dir: this.facing,
+          life: sp.life || 1.0,
+        });
+      }
+      SF.World.muzzle(this.x + this.facing * 30, this.y - 34, sp.color || "#ffffff", this.facing);
+      this.vx -= this.facing * 90;
+      this.landSquash = 0.3;
+      this.state = this.onGround ? "idle" : "air";
+    } else if (sp.type === "warp") {
+      const dist = sp.dist || 180;
+      const nx = SF.clamp(this.x + this.facing * dist, -1000, 1000);
+      SF.World.dashBurst(this.x, this.y - 26, sp.color || this.palette.accent, this.facing);
+      SF.World.burst(nx, this.y - 30, sp.color || this.palette.glow, 14, 320, { size: 5, life: 0.35, grav: 0 });
+      this.x = nx;
+      if (sp.lift) {
+        this.y -= sp.lift;
+        this.onGround = false;
+        this.vy = -300;
+        SF.World.ring(nx, this.y - 24, sp.color || this.palette.accent, 34);
+      }
+      this.vx = this.facing * 120;
+      this.invuln = Math.max(this.invuln, 0.18);
+      this.state = this.onGround ? "idle" : "air";
+    } else if (sp.type === "rise") {
+      this.state = "special";
+      this.spec = { kind: "rise", t: 0, dur: 0.4, hit: new Set(), sp };
+      this.vx = this.facing * 160;
+      this.vy = -(sp.speed || 980);
+      this.onGround = false;
+      this.jumps = Math.max(this.jumps, 1);
+      SF.World.dust(this.x, this.y, 0, 8);
+      SF.World.burst(this.x, this.y - 10, sp.color || this.palette.glow, 12, 260, {
+        angle: -Math.PI / 2,
+        spread: 0.9,
+        size: 4,
+        life: 0.3,
+        grav: 300,
+      });
     } else if (sp.type === "dash") {
       this.state = "special";
       this.spec = { kind: "dash", t: 0, dur: 0.36, hit: new Set(), sp };
@@ -496,6 +564,30 @@ class Fighter {
       return;
     }
 
+    if (s.kind === "rise") {
+      this.vx = SF.approach(this.vx, 0, 900 * dt);
+      if (s.t < 0.3) this.vy = Math.min(this.vy, -(sp.speed || 980) * 0.55);
+      if (s.t > 0.02 && s.t < 0.3 && foe && foe.canBeHit() && !s.hit.has(foe)) {
+        const box = this.hitbox({ x: -30, y: -110, w: 62, h: 104 });
+        if (SF.overlap(box, foe.hurtbox)) {
+          s.hit.add(foe);
+          foe.receiveHit(
+            this,
+            { dmg: sp.dmg, base: sp.base, scale: sp.scale, angle: sp.angle },
+            1,
+            foe.x >= this.x ? 1 : -1,
+            this.x,
+            this.y - 60
+          );
+        }
+      }
+      if (s.t >= s.dur) {
+        this.spec = null;
+        this.state = this.onGround ? "idle" : "air";
+      }
+      return;
+    }
+
     /* pulse: the damage is the shockwave spawned on cast */
     this.vx = SF.approach(this.vx, 0, 2600 * dt);
     if (s.t >= s.dur) {
@@ -554,9 +646,10 @@ class Fighter {
     m.t += dt;
     const t = m.t;
 
+    const rooted = u.kind !== "meteor" && u.kind !== "quake" && u.kind !== "sweep";
     if (u.kind === "rush") this.vx = SF.approach(this.vx, this.facing * 120, 2600 * dt);
-    else if (u.kind !== "meteor" && u.kind !== "quake") this.vx = SF.approach(this.vx, 0, 3600 * dt);
-    if (u.kind !== "meteor" && u.kind !== "quake") SF.World.chargePuff(this);
+    else if (rooted) this.vx = SF.approach(this.vx, 0, 3600 * dt);
+    if (rooted) SF.World.chargePuff(this);
 
     if (u.kind === "domain") {
       /* the void catches anyone standing in it, then throws them out */
@@ -597,6 +690,52 @@ class Fighter {
             box.y + 78
           );
         }
+      }
+    } else if (u.kind === "clap") {
+      /* a titan's hands meet in the middle: one wide two-sided crush */
+      if (!m.fired && t >= 0.44) {
+        m.fired = 1;
+        const box = { x: this.x - 150, y: this.y - 132, w: 300, h: 168 };
+        SF.World.burst(this.x - 70, this.y - 60, col, 20, 460, { angle: Math.PI, spread: 0.7, size: 7, life: 0.42 });
+        SF.World.burst(this.x + 70, this.y - 60, col, 20, 460, { angle: 0, spread: 0.7, size: 7, life: 0.42 });
+        SF.World.ring(this.x, this.y - 62, col, 160);
+        SF.World.shakeTo(26);
+        SF.Sound.hit(1);
+        if (foe && foe.canBeHit() && SF.overlap(box, foe.hurtbox)) {
+          foe.receiveHit(
+            this,
+            { dmg: u.dmg, base: u.base, scale: u.scale, angle: u.angle },
+            1,
+            foe.x >= this.x ? 1 : -1,
+            this.x,
+            this.y - 60
+          );
+        }
+      }
+    } else if (u.kind === "sweep") {
+      /* one flat-out sprint the width of the stage, hitting everything it passes */
+      if (t > 0.12 && t < 0.78) {
+        if (!m.swept) m.swept = new Set();
+        this.vx = this.facing * (u.speed || 1500);
+        SF.World.dashTrail(this);
+        if (Math.random() < 0.45) SF.World.ring(this.x, this.y - 26, col, 24);
+        if (foe && foe.canBeHit() && !m.swept.has(foe)) {
+          const box = { x: this.x - 44, y: this.y - 64, w: 88, h: 66 };
+          if (SF.overlap(box, foe.hurtbox)) {
+            m.swept.add(foe);
+            foe.receiveHit(
+              this,
+              { dmg: u.dmg, base: u.base, scale: u.scale, angle: u.angle },
+              1,
+              this.facing,
+              this.x,
+              this.y - 34
+            );
+            SF.World.shakeTo(18);
+          }
+        }
+      } else if (t >= 0.78) {
+        this.vx = SF.approach(this.vx, 0, 2600 * dt);
       }
     } else if (u.kind === "rush") {
       const interval = u.interval || 0.12;
