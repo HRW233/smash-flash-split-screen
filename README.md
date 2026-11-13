@@ -31,6 +31,7 @@ Two people can share one keyboard, or play from two machines over the internet â
 | `F` | attack â€” hold on the ground for a charged smash |
 | `G` | special |
 | `V` | dodge |
+| `T` | ultimate (once the meter is full) |
 
 ### Player 2
 
@@ -42,6 +43,7 @@ Two people can share one keyboard, or play from two machines over the internet â
 | `K` | attack â€” hold on the ground for a charged smash |
 | `L` | special |
 | `;` | dodge |
+| `'` | ultimate (once the meter is full) |
 
 `Enter` confirms, `Esc` pauses, `M` mutes.
 
@@ -51,6 +53,29 @@ Attacks are directional, and every direction is its own move. On the ground: for
 chargeable smash, up is an anti-air, down is a low sweep. In the air: neutral is a plain aerial,
 toward the foe is a forward kick, away is a back kick that throws them behind you, up is a rising
 uppercut and down is a spike that drives them toward the blast zone.
+
+## Ultimates
+
+Every fighter has a super move. The purple bar under the damage meter fills as you land hits and as
+you take them; when it is full it turns gold and reads `ULT READY`, and your ult key fires it once.
+While the move plays you cannot be hit, so it is a safe way out of a bad spot as well as a finisher.
+
+| Fighter | Ultimate | What it does |
+|---|---|---|
+| GOJO | **UNLIMITED VOID** | traps the foe in place, then detonates a huge void shockwave |
+| GON | **JAJANKEN: ROCK** | one enormous wind-up punch with the biggest knockback in the game |
+| KILLUA | **GODSPEED: WHIRLWIND** | teleports around the foe for six rapid strikes |
+| EREN | **FOUNDING TITAN** | leaps and drives a titan fist down for a ground shockwave |
+| LUFFY | **KING KONG GUN** | fires five giant stretching fists in a row |
+| NARUTO | **RASENSHURIKEN** | hurls a slow, huge, piercing shuriken that carries the foe away |
+| GOKU | **SUPER KAMEHAMEHA** | a beam that crosses the whole stage and pierces through |
+| ASH & PIKACHU | **PIKACHU, THUNDERBOLT!** | calls down eight lightning bolts around the foe |
+| ICHIGO | **BANKAI: MUGETSU** | twin crescents of compressed spirit pressure |
+| EDWARD | **TRANSMUTATION** | stone spikes erupt from the floor in a line across the stage |
+| BLAZE | **INFERNO** | three expanding fire rings |
+| VOLT | **LIGHTSPEED RUSH** | eight lightning-fast passes through the foe |
+| IRON | **SEISMIC SLAM** | a ground slam that shakes the entire island |
+| FROST | **ABSOLUTE ZERO** | a wide ice wave that freezes the foe solid |
 
 ## Play online
 

@@ -54,6 +54,7 @@
       style: { hair: "fluffy", blindfold: true, coat: true, collar: true },
       special: { type: "pulse", cooldown: 1.15, label: "BLUE", dmg: 13, base: 380, scale: 6, angle: 72, rMax: 205, color: "#7fd0ff" },
       moves: build({ speed: 1.12, power: 1.22 }, { sideKb: 1.02 }),
+      ult: { kind: "domain", name: "UNLIMITED VOID", dur: 1.55, dmg: 26, base: 520, scale: 7, angle: 82, rMax: 300, color: "#b388ff" },
       quote: '"NAH, I\'D WIN."',
     },
     {
@@ -68,6 +69,7 @@
       style: { hair: "spiky", shoulders: 0.9 },
       special: { type: "punch", cooldown: 0.95, label: "JAJANKEN", dmg: 19, base: 430, scale: 7, angle: 32 },
       moves: build({ speed: 1.06, power: 1.16 }, { sideDmg: 1.05 }),
+      ult: { kind: "punch", name: "JAJANKEN: ROCK", dur: 0.95, dmg: 30, base: 560, scale: 8, angle: 30, color: "#b6ff6b" },
       quote: '"I\'LL DO IT MY WAY."',
     },
     {
@@ -82,6 +84,7 @@
       style: { hair: "fluffy", spark: true, scarf: false },
       special: { type: "dash", cooldown: 0.95, label: "GODSPEED", dmg: 12, base: 330, scale: 6, angle: 26, speed: 1200, color: "#9df9ff" },
       moves: build({ speed: 1.3, power: 0.92 }, { startup: 0.9 }),
+      ult: { kind: "rush", name: "GODSPEED: WHIRLWIND", dur: 1.05, hits: 6, interval: 0.13, dmg: 4.5, base: 115, scale: 2.4, angle: 84, range: 460, color: "#9df9ff" },
       quote: '"YOU\'RE TOO SLOW."',
     },
     {
@@ -96,6 +99,7 @@
       style: { hair: "tied", coat: true, shoulders: 1.15 },
       special: { type: "pound", cooldown: 1.4, label: "TITAN SLAM", dmg: 16, base: 390, scale: 7, angle: 72, rMax: 180, color: "#8ef0a0" },
       moves: build({ speed: 0.98, power: 1.2 }, { sideDmg: 1.06, sideKb: 1.05 }),
+      ult: { kind: "meteor", name: "FOUNDING TITAN", dur: 1.7, dmg: 24, base: 470, scale: 6.6, angle: 78, rMax: 330, color: "#8ef0a0" },
       quote: '"I\'LL KEEP MOVING FORWARD."',
     },
     {
@@ -110,6 +114,7 @@
       style: { hair: "short", strawhat: true, scarf: false },
       special: { type: "projectile", style: "fist", cooldown: 0.55, label: "GUM-GUM PISTOL", dmg: 10, base: 300, scale: 5, angle: 22, speed: 900, r: 15, life: 0.5, gravity: 0, color: "#ffcf5c" },
       moves: build({ speed: 1.1, power: 1.12 }, {}),
+      ult: { kind: "barrage", name: "KING KONG GUN", dur: 1.0, shots: 5, dmg: 9, base: 250, scale: 5, angle: 26, speed: 1050, color: "#ffd166" },
       quote: '"I\'M GONNA BE KING OF THE PIRATES."',
     },
     {
@@ -124,6 +129,7 @@
       style: { hair: "spiky", headband: true, shoulders: 0.95 },
       special: { type: "projectile", style: "orb", cooldown: 0.85, label: "RASENGAN", dmg: 15, base: 390, scale: 6, angle: 28, speed: 440, r: 18, life: 1.0, gravity: 0, color: "#7cc7ff" },
       moves: build({ speed: 1.1, power: 1.1 }, { sideDmg: 1.04 }),
+      ult: { kind: "orb", name: "RASENSHURIKEN", dur: 0.95, dmg: 24, base: 430, scale: 6.4, angle: 30, speed: 300, r: 40, life: 2.0, color: "#7cc7ff" },
       quote: '"BELIEVE IT!"',
     },
     {
@@ -138,6 +144,7 @@
       style: { hair: "goku", shoulders: 1.05 },
       special: { type: "projectile", style: "beam", cooldown: 1.0, label: "KAMEHAMEHA", dmg: 17, base: 330, scale: 5, angle: 18, speed: 980, r: 15, life: 0.55, gravity: 0, color: "#8fe9ff", pierce: true },
       moves: build({ speed: 1.08, power: 1.26 }, { sideKb: 1.06 }),
+      ult: { kind: "beam", name: "SUPER KAMEHAMEHA", dur: 1.35, dmg: 32, base: 470, scale: 6, angle: 16, speed: 1500, r: 34, life: 0.9, color: "#8fe9ff" },
       quote: '"LET\'S FIGHT."',
     },
     {
@@ -152,6 +159,7 @@
       style: { hair: "short", cap: true, companion: "pikachu" },
       special: { type: "projectile", style: "bolt", cooldown: 0.7, label: "THUNDERBOLT", dmg: 9, base: 270, scale: 5, angle: 24, speed: 820, r: 13, life: 0.65, gravity: 0, color: "#ffe066" },
       moves: build({ speed: 1.02, power: 0.98 }, { startup: 0.94 }),
+      ult: { kind: "storm", name: "PIKACHU, THUNDERBOLT!", dur: 1.3, bolts: 9, interval: 0.12, dmg: 7, base: 210, scale: 3.2, angle: 80, spread: 120, r: 46, color: "#ffe066" },
       quote: '"PIKA, PIKA!"',
     },
     {
@@ -166,6 +174,7 @@
       style: { hair: "ichigo", sword: true, shoulders: 1.05 },
       special: { type: "projectile", style: "crescent", cooldown: 0.9, label: "GETSUGA TENSHO", dmg: 14, base: 330, scale: 6, angle: 30, speed: 760, r: 22, life: 0.65, gravity: 0, color: "#68e0ff" },
       moves: build({ speed: 1.04, power: 1.18 }, { sideKb: 1.04 }),
+      ult: { kind: "crescent", name: "BANKAI: MUGETSU", dur: 1.0, dmg: 26, base: 430, scale: 6.5, angle: 30, speed: 900, r: 46, life: 0.8, color: "#68e0ff" },
       quote: '"BANKAI."',
     },
     {
@@ -180,6 +189,7 @@
       style: { hair: "braid", coat: true, automail: true },
       special: { type: "projectile", style: "spike", cooldown: 0.9, label: "ALCHEMY SPIKE", dmg: 14, base: 360, scale: 6, angle: 70, speed: 620, r: 18, life: 0.55, gravity: 0, color: "#c9a27a", ground: true },
       moves: build({ speed: 1.0, power: 1.14 }, {}),
+      ult: { kind: "pillars", name: "TRANSMUTATION", dur: 0.95, spikes: 8, interval: 0.06, dmg: 14, base: 300, scale: 5, angle: 78, gap: 62, r: 50, color: "#c9a27a" },
       quote: '"A LESSON IN ALCHEMY."',
     },
     /* ---- the original four, kept for the home crowd ---- */
@@ -195,6 +205,7 @@
       style: { hair: "spiky", shoulders: 1.1, flame: true },
       special: { type: "projectile", style: "fire", cooldown: 0.62, label: "FIREBALL", dmg: 8, base: 240, scale: 5, angle: 26, speed: 660, r: 15, life: 1.5, gravity: 95, color: "#ff9a3d" },
       moves: build({ speed: 1.04, power: 1.1 }, { sideDmg: 1.08, sideKb: 1.05 }),
+      ult: { kind: "nova", name: "INFERNO", dur: 1.1, rings: 3, interval: 0.2, dmg: 10, base: 300, scale: 5.5, angle: 76, rMax: 210, color: "#ff9a3d" },
       quote: '"ONE MORE ROUND."',
     },
     {
@@ -209,6 +220,7 @@
       style: { hair: "spiky", shoulders: 0.85, scarf: true, visor: true, spark: true },
       special: { type: "dash", cooldown: 1.05, label: "VOLT DASH", dmg: 13, base: 340, scale: 6.5, angle: 26, speed: 1080, color: "#38e1ff" },
       moves: build({ speed: 1.26, power: 0.9 }, { startup: 0.9, recovery: 0.95 }),
+      ult: { kind: "rush", name: "LIGHTSPEED RUSH", dur: 1.0, hits: 8, interval: 0.1, dmg: 3.5, base: 105, scale: 2.2, angle: 88, range: 520, color: "#38e1ff" },
       quote: '"BLINK AND LOSE."',
     },
     {
@@ -223,6 +235,7 @@
       style: { hair: "buzz", shoulders: 1.45, helmet: true, plate: true },
       special: { type: "pound", cooldown: 1.45, label: "IRON QUAKE", dmg: 15, base: 360, scale: 6.5, angle: 74, rMax: 165, color: "#ffb454" },
       moves: build({ speed: 0.84, power: 1.22 }, { sideDmg: 1.1, sideKb: 1.1 }),
+      ult: { kind: "quake", name: "SEISMIC SLAM", dur: 1.5, dmg: 26, base: 500, scale: 6.6, angle: 80, rMax: 430, color: "#ffb454" },
       quote: '"STAY DOWN."',
     },
     {
@@ -237,6 +250,7 @@
       style: { hair: "long", scarf: true, hood: true, frost: true },
       special: { type: "projectile", style: "ice", cooldown: 0.85, label: "ICE SHARD", dmg: 6, base: 200, scale: 4.5, angle: 30, speed: 560, r: 13, life: 1.5, gravity: 25, freeze: 0.55, color: "#b8ecff" },
       moves: build({ speed: 1.0, power: 1.02 }, {}),
+      ult: { kind: "blizzard", name: "ABSOLUTE ZERO", dur: 1.0, dmg: 12, base: 250, scale: 5, angle: 34, speed: 430, r: 32, life: 1.5, freeze: 1.3, color: "#b8ecff" },
       quote: '"HOLD STILL."',
     },
   ];
