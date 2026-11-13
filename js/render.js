@@ -7,10 +7,12 @@
   let ctx = null;
   let W = 0;
   let H = 0;
-  /* the game draws into a tiny buffer that is blown up with nearest-neighbour
-     sampling, which is what gives everything its chunky pixel edges */
-  const PIXELS = 420;
-  let px = 3;
+  /* the game draws into a buffer that is blown up with nearest-neighbour
+     sampling. the buffer holds roughly 640 virtual pixels across so shapes are
+     crisp and readable, while every edge still snaps to whole screen pixels,
+     which is what makes it read as pixel art instead of a blurry low-res image */
+  const PIXELS = 760;
+  let px = 2;
 
   R.init = function (c) {
     canvas = c;
@@ -23,7 +25,7 @@
     if (!canvas) return;
     W = window.innerWidth;
     H = window.innerHeight;
-    px = SF.clamp(Math.round(Math.max(W, H) / PIXELS), 2, 8);
+    px = SF.clamp(Math.round(Math.max(W, H) / PIXELS), 1, 3);
     canvas.width = Math.max(2, Math.round(W / px));
     canvas.height = Math.max(2, Math.round(H / px));
     canvas.style.width = W + "px";
@@ -219,6 +221,12 @@
           p.armB = 2.9;
           p.legF = 0.2;
           p.legB = -0.2;
+        } else if (s && s.kind === "rise") {
+          p.armF = -3.05;
+          p.armB = 3.05;
+          p.legF = -0.15;
+          p.legB = 0.3;
+          p.lean = -0.15;
         }
         break;
       }
@@ -1299,8 +1307,9 @@
     /* special meter */
     const sp = f.char.special;
     const ready = f.specialCd <= 0;
+    const cdMax = f.specCdMax || (sp && sp.cooldown) || 1;
     const w = Math.min(200, panel.w * 0.3);
-    tally(panel.x + panel.w - pad - w, baseY - 22, w, 8, ready ? 1 : 1 - f.specialCd / sp.cooldown, ready ? f.palette.accent : "#6b7280");
+    tally(panel.x + panel.w - pad - w, baseY - 22, w, 8, ready ? 1 : SF.clamp(1 - f.specialCd / cdMax, 0, 1), ready ? f.palette.accent : "#6b7280");
     ctx.save();
     ctx.font = fontPlain(Math.max(13, panel.w * 0.019), 800);
     ctx.textAlign = "right";
@@ -1473,8 +1482,8 @@
     /* controls strip */
     const cw = Math.min(w * 0.42, 470);
     const cy = h * 0.47;
-    controlCard(w / 2 - cw - 12, cy, cw, "#4cc9f0", "PLAYER 1", ["A D  MOVE", "W  JUMP", "S  FAST FALL", "F  ATTACK", "G  SPECIAL", "V  DODGE", "T  ULTIMATE"]);
-    controlCard(w / 2 + 12, cy, cw, "#f72585", "PLAYER 2", ["← →  MOVE", "↑  JUMP", "↓  FAST FALL", "K  ATTACK", "L  SPECIAL", ";  DODGE", "'  ULTIMATE"]);
+    controlCard(w / 2 - cw - 12, cy, cw, "#4cc9f0", "PLAYER 1", ["A D  MOVE", "W  JUMP", "S  FAST FALL", "F  ATTACK", "G  SPECIAL + DIR", "V  DODGE", "T  ULTIMATE"]);
+    controlCard(w / 2 + 12, cy, cw, "#f72585", "PLAYER 2", ["← →  MOVE", "↑  JUMP", "↓  FAST FALL", "K  ATTACK", "L  SPECIAL + DIR", ";  DODGE", "'  ULTIMATE"]);
   };
 
   function controlCard(x, y, w, color, title, lines) {
@@ -1742,11 +1751,11 @@
     text("PAUSED", w / 2, h * 0.4, Math.max(30, w * 0.05), "#ffffff", { lw: 10 });
     text("ESC — RESUME", w / 2, h * 0.49, Math.max(13, w * 0.015), "#ffe066", { lw: 4 });
     text("ENTER — QUIT TO CHARACTER SELECT", w / 2, h * 0.55, Math.max(13, w * 0.015), "rgba(255,255,255,0.75)", { lw: 4 });
-    text("P1  A/D MOVE  W JUMP  S FALL  F ATTACK  G SPECIAL  V DODGE  T ULT", w / 2, h * 0.64, Math.max(13, w * 0.014), "rgba(180,225,255,0.8)", {
+    text("P1  A/D MOVE  W JUMP  S FALL  F ATTACK  G+DIR SPECIAL  V DODGE  T ULT", w / 2, h * 0.64, Math.max(13, w * 0.014), "rgba(180,225,255,0.8)", {
       plain: true,
       stroke: false,
     });
-    text("P2  ← → MOVE  ↑ JUMP  ↓ FALL  K ATTACK  L SPECIAL  ; DODGE  ' ULT", w / 2, h * 0.68, Math.max(13, w * 0.014), "rgba(255,190,225,0.8)", {
+    text("P2  ← → MOVE  ↑ JUMP  ↓ FALL  K ATTACK  L+DIR SPECIAL  ; DODGE  ' ULT", w / 2, h * 0.68, Math.max(13, w * 0.014), "rgba(255,190,225,0.8)", {
       plain: true,
       stroke: false,
     });
