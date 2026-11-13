@@ -172,6 +172,24 @@
           p.crouch = 5 * swing;
           p.legF = 0.5;
           p.legB = -0.4;
+        } else if (a.kind === "airDown") {
+          p.armF = 2.2;
+          p.armB = -2.2;
+          p.legF = 0.95;
+          p.legB = 0.75;
+          p.lean = 0.3;
+        } else if (a.kind === "airUp") {
+          p.armF = -3.05;
+          p.armB = 3.05;
+          p.legF = -0.3;
+          p.legB = 0.35;
+          p.lean = -0.12;
+        } else if (a.kind === "airBack") {
+          p.armF = 2.4;
+          p.armB = 2.4;
+          p.legF = -0.5;
+          p.legB = -0.9;
+          p.lean = -0.2;
         } else {
           p.armF = -1.15;
           p.armB = 1.85;
@@ -790,9 +808,20 @@
         c.save();
         c.globalCompositeOperation = "lighter";
         c.globalAlpha = 0.75 * (1 - prog);
-        const ang0 = { side: -2.2, up: -3.0, down: 0.1, air: -1.7 }[a.kind] || -1.6;
+        const ARC = {
+          side: [-2.2, 50],
+          up: [-3.0, 62],
+          down: [0.1, 46],
+          air: [-1.7, 54],
+          airFwd: [-1.4, 56],
+          airBack: [2.5, 52],
+          airUp: [-3.0, 64],
+          airDown: [0.3, 52],
+        };
+        const arc = ARC[a.kind] || [-1.6, 50];
+        const ang0 = arc[0];
         const ang1 = ang0 + 1.5;
-        const rad = { side: 50, up: 62, down: 46, air: 54 }[a.kind] || 50;
+        const rad = arc[1];
         c.strokeStyle = a.power > 1.25 ? "#ffd166" : p.accent;
         c.lineWidth = 8;
         c.lineCap = "round";
