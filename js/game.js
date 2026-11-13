@@ -23,6 +23,7 @@
     prevStocks: [],
     acc: 0,
     layoutMode: "",
+    onlineRole: "",
 
     init(canvas) {
       SF.Render.init(canvas);
@@ -73,6 +74,10 @@
       SF.input.beginFrame();
       if (SF.input.hit("KeyM")) SF.Sound.muted = !SF.Sound.muted;
 
+      if (this.state === "online") {
+        SF.Net.tick(dt);
+        return;
+      }
       if (this.state === "title") this.updateTitle(dt);
       else if (this.state === "select") this.updateSelect(dt);
       else if (this.state === "fight") this.updateFight(dt);
@@ -100,6 +105,7 @@
         this.cursor = [0, 3];
         SF.Sound.select();
       }
+      if (i.hit("KeyO")) SF.Net.open();
     },
 
     gridCols() {
@@ -209,6 +215,10 @@
     },
 
     updateFight(dt) {
+      if (this.onlineRole) {
+        SF.Net.fightTick(dt);
+        return;
+      }
       const i = SF.input;
       if (i.hit("Escape")) {
         this.state = "pause";
@@ -316,6 +326,17 @@
       this.resultT += dt;
       const i = SF.input;
       if (this.resultT < 0.5) return;
+      if (this.onlineRole) {
+        if (i.hit("Enter") || i.hit("Space")) {
+          this.state = "online";
+          this.winner = null;
+          SF.Net.phase = "ready";
+          SF.Sound.move();
+        } else if (i.hit("Escape")) {
+          SF.Net.leave();
+        }
+        return;
+      }
       if (i.hit("Enter") || i.hit("Space") || i.hit("KeyF") || i.hit("KeyK")) {
         this.startMatch();
       } else if (i.hit("Escape")) {
@@ -328,8 +349,13 @@
     /* ------------------------------------------------------------- render */
     render() {
       SF.Render.begin();
+      if (this.state === "online") {
+        SF.Net.draw(this);
+        return;
+      }
       if (this.state === "title") {
         SF.Render.title(this);
+        SF.Net.titleHint(this);
       } else if (this.state === "select") {
         SF.Render.select(this);
       } else if (this.state === "fight" || this.state === "pause" || this.state === "results") {
